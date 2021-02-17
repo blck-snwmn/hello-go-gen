@@ -17,7 +17,7 @@ type (
 ```
 
 output
-```
+```go
 func (s *Foo) Hello() {
 	fmt.Println("hello world")
 }
