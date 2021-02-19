@@ -1,3 +1,4 @@
+//go:generate ./main
 package main
 
 type Foo struct {

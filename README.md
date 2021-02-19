@@ -1,6 +1,7 @@
 # hello-go-gen
 
 input
+
 ```go
 type Foo struct {
 	a int
@@ -17,7 +18,8 @@ type (
 ```
 
 output
-```go
+
+````go
 func (s *Foo) Hello() {
 	fmt.Println("hello world")
 }
@@ -29,4 +31,10 @@ func (s *Baz1) Hello() {
 func (s *Baz2) Hello() {
 	fmt.Println("hello world")
 }
-```
+
+## Generate
+
+```sh
+go build main
+go generate
+````
