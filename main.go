@@ -21,11 +21,11 @@ func main() {
 }
 
 func execute(in, out string) error {
-	result, err := generate("target.go")
+	result, err := generate(in)
 	if err != nil {
 		return xerrors.Errorf("failed to generate: %w", err)
 	}
-	if err := write(result, "./out/output.go"); err != nil {
+	if err := write(result, out); err != nil {
 		return xerrors.Errorf("failed to write: %w", err)
 	}
 	return nil
