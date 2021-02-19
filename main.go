@@ -8,7 +8,8 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
-	"strings"
+
+	"golang.org/x/xerrors"
 )
 
 const tempalteFile = `
@@ -29,46 +30,60 @@ func (s *%s)Hello(){
 `
 
 func main() {
+	result, err := generate("target.go")
+	if err != nil {
+		fmt.Printf("failed to generate: %+v\n", err)
+		return
+	}
+	if err := write(result, "./out/output.go"); err != nil {
+		fmt.Printf("failed to write: %+v\n", err)
+		return
+	}
+}
+
+func generate(inputPath string) ([]byte, error) {
 	fset := token.NewFileSet()
-	f, _ := parser.ParseFile(fset, "target.go", nil, parser.Mode(0))
+	f, _ := parser.ParseFile(fset, inputPath, nil, parser.Mode(0))
 
-	var structs []string
+	var (
+		buf bytes.Buffer
+		err error
+	)
+	fmt.Fprintln(&buf, "package generate")
 
-	// structの取得
-	var buf bytes.Buffer
+	fmt.Fprintln(&buf, `import "fmt"`)
+
 	ast.Inspect(f, func(n ast.Node) bool {
 		if typeSpec, ok := n.(*ast.TypeSpec); ok {
 			if _, ok := typeSpec.Type.(*ast.StructType); ok {
-				err := format.Node(&buf, fset, typeSpec)
-				if err != nil {
-					fmt.Printf("failed to ast.Inspect: %+v\n", err)
+				fmt.Fprint(&buf, "type ")
+
+				errIn := format.Node(&buf, fset, typeSpec)
+				if errIn != nil {
+					err = errIn
 					return true
 				}
 				fmt.Fprint(&buf, "\n")
 
-				structs = append(structs, typeSpec.Name.Name)
+				fmt.Fprintf(&buf, templateFunc, typeSpec.Name.Name)
 			}
 		}
 		return true
 	})
+	return buf.Bytes(), err
+}
 
-	// コード生成
-	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf(tempalteFile, buf.String()))
-
-	for _, s := range structs {
-		builder.WriteString(fmt.Sprintf(templateFunc, s))
-	}
-	// ソースコードとして整形等
-	src, err := format.Source([]byte(builder.String()))
+func write(srcBase []byte, outputPath string) error {
+	// fmt.Println(string(srcBase))
+	src, err := format.Source(srcBase)
 	if err != nil {
-		fmt.Printf("failed to format.Source: %+v\n", err)
-		return
+		return xerrors.Errorf("failed to format.Source: %w", err)
 	}
 	// 書き込み
-	err = ioutil.WriteFile("./out/output.go", src, 0664)
+	err = ioutil.WriteFile(outputPath, src, 0664)
 	if err != nil {
 		fmt.Printf("failed to ioutil.WriteFile: %+v\n", err)
-		return
+		return xerrors.Errorf("failed to format.Source: %w", err)
 	}
+	return nil
 }
