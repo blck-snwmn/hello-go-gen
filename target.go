@@ -1,4 +1,4 @@
-//go:generate go run . -source=./$GOFILE -destination=./out/output.go
+//go:generate go run ./cmd/hello-go-gen -source=./$GOFILE -destination=./out/output.go
 package main
 
 type Foo struct {

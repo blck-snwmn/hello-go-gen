@@ -14,14 +14,24 @@ import (
 )
 
 var (
-	source      = flag.String("source", "", "")
-	destination = flag.String("destination", "", "")
+	sourceArg      = flag.String("source", "", "")
+	destinationArg = flag.String("destination", "", "")
 )
 
 func main() {
 	flag.Parse()
 
-	if err := execute(*source, *destination); err != nil {
+	source, destination := *sourceArg, *destinationArg
+
+	if source == "" {
+		fmt.Println("source args is empty")
+		return
+	}
+	if destination == "" {
+		fmt.Println("destination args is empty")
+		return
+	}
+	if err := execute(source, destination); err != nil {
 		fmt.Printf("failed to execute: %+v\n", err)
 	}
 }
