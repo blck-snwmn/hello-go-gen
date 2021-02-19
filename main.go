@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -12,10 +13,15 @@ import (
 	"golang.org/x/xerrors"
 )
 
+var (
+	source      = flag.String("source", "", "")
+	destination = flag.String("destination", "", "")
+)
+
 func main() {
-	in := "target.go"
-	out := "./out/output.go"
-	if err := execute(in, out); err != nil {
+	flag.Parse()
+
+	if err := execute(*source, *destination); err != nil {
 		fmt.Printf("failed to execute: %+v\n", err)
 	}
 }
