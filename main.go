@@ -12,33 +12,23 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const tempalteFile = `
-package gen
-
-import "fmt"
-
-type(
-	%s
-)
-
-`
-
-const templateFunc = `
-func (s *%s)Hello(){
-	fmt.Println("hello world")
-}
-`
-
 func main() {
+	in := "target.go"
+	out := "./out/output.go"
+	if err := execute(in, out); err != nil {
+		fmt.Printf("failed to execute: %+v\n", err)
+	}
+}
+
+func execute(in, out string) error {
 	result, err := generate("target.go")
 	if err != nil {
-		fmt.Printf("failed to generate: %+v\n", err)
-		return
+		return xerrors.Errorf("failed to generate: %w", err)
 	}
 	if err := write(result, "./out/output.go"); err != nil {
-		fmt.Printf("failed to write: %+v\n", err)
-		return
+		return xerrors.Errorf("failed to write: %w", err)
 	}
+	return nil
 }
 
 func generate(inputPath string) ([]byte, error) {
@@ -72,6 +62,22 @@ func generate(inputPath string) ([]byte, error) {
 	})
 	return buf.Bytes(), err
 }
+
+const tempalteFile = `
+package gen
+
+import "fmt"
+
+type(
+	%s
+)
+`
+
+const templateFunc = `
+func (s *%s)Hello(){
+	fmt.Println("hello world")
+}
+`
 
 func write(srcBase []byte, outputPath string) error {
 	// fmt.Println(string(srcBase))
