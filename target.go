@@ -1,4 +1,4 @@
-//go:generate ./main
+//go:generate go run main.go
 package main
 
 type Foo struct {
