@@ -55,6 +55,9 @@ func generate(inputPath string) ([]byte, error) {
 		buf bytes.Buffer
 		err error
 	)
+
+	fmt.Fprintln(&buf, "// Code generated sample DO NOT EDIT.")
+
 	fmt.Fprintln(&buf, "package generate")
 
 	fmt.Fprintln(&buf, `import "fmt"`)

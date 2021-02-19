@@ -1,3 +1,4 @@
+// Code generated sample DO NOT EDIT.
 package generate
 
 import "fmt"
