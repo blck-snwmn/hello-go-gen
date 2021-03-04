@@ -82,19 +82,18 @@ func generate(inputPath string) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
-const tempalteFile = `
-package gen
-
-import "fmt"
-
-type(
-	%s
-)
-`
-
 const templateFunc = `
-func (s *%s)Hello(){
+func (s *%[1]s)Hello(){
 	fmt.Println("hello world")
+}
+func (s *%[1]s)Hello2(){
+	fmt.Println("hello world2")
+}
+func (s *%[1]s)Hello3(){
+	fmt.Println("hello world2")
+}
+func (s *%[1]s)Hello4(){
+	fmt.Println("hello world2")
 }
 `
 

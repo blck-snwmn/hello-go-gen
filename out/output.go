@@ -10,6 +10,15 @@ type Foo struct {
 func (s *Foo) Hello() {
 	fmt.Println("hello world")
 }
+func (s *Foo) Hello2() {
+	fmt.Println("hello world2")
+}
+func (s *Foo) Hello3() {
+	fmt.Println("hello world2")
+}
+func (s *Foo) Hello4() {
+	fmt.Println("hello world2")
+}
 
 type Bar struct {
 	a int
@@ -19,6 +28,15 @@ type Bar struct {
 func (s *Bar) Hello() {
 	fmt.Println("hello world")
 }
+func (s *Bar) Hello2() {
+	fmt.Println("hello world2")
+}
+func (s *Bar) Hello3() {
+	fmt.Println("hello world2")
+}
+func (s *Bar) Hello4() {
+	fmt.Println("hello world2")
+}
 
 type Baz1 struct {
 	aa int
@@ -27,6 +45,15 @@ type Baz1 struct {
 func (s *Baz1) Hello() {
 	fmt.Println("hello world")
 }
+func (s *Baz1) Hello2() {
+	fmt.Println("hello world2")
+}
+func (s *Baz1) Hello3() {
+	fmt.Println("hello world2")
+}
+func (s *Baz1) Hello4() {
+	fmt.Println("hello world2")
+}
 
 type Baz2 struct {
 	b string
@@ -34,4 +61,13 @@ type Baz2 struct {
 
 func (s *Baz2) Hello() {
 	fmt.Println("hello world")
+}
+func (s *Baz2) Hello2() {
+	fmt.Println("hello world2")
+}
+func (s *Baz2) Hello3() {
+	fmt.Println("hello world2")
+}
+func (s *Baz2) Hello4() {
+	fmt.Println("hello world2")
 }
