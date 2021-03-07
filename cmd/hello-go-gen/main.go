@@ -8,6 +8,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"io"
 	"io/ioutil"
 
 	"golang.org/x/xerrors"
@@ -47,21 +48,14 @@ func execute(in, out string) error {
 	return nil
 }
 
-func generate(inputPath string) ([]byte, error) {
-	fset := token.NewFileSet()
-	f, _ := parser.ParseFile(fset, inputPath, nil, parser.ParseComments)
+func printHeader(writer io.Writer) {
+	fmt.Fprintln(writer, "// Code generated sample DO NOT EDIT.")
+	fmt.Fprintln(writer, "package generate")
+	fmt.Fprintln(writer, `import "fmt"`)
+}
 
-	var (
-		buf bytes.Buffer
-		err error
-	)
-
-	fmt.Fprintln(&buf, "// Code generated sample DO NOT EDIT.")
-
-	fmt.Fprintln(&buf, "package generate")
-
-	fmt.Fprintln(&buf, `import "fmt"`)
-
+func printBody(writer io.Writer, f *ast.File, fset *token.FileSet) error {
+	var err error
 	ast.Inspect(f, func(n ast.Node) bool {
 		if gd, ok := n.(*ast.GenDecl); ok {
 			for _, spec := range gd.Specs {
@@ -80,25 +74,41 @@ func generate(inputPath string) ([]byte, error) {
 						typeSpec.Doc = nil
 						if doc != nil {
 							for _, d := range doc.List {
-								fmt.Fprintln(&buf, d.Text)
+								fmt.Fprintln(writer, d.Text)
 							}
 						}
-						fmt.Fprint(&buf, "type ")
+						fmt.Fprint(writer, "type ")
 
-						errIn := format.Node(&buf, fset, typeSpec)
+						errIn := format.Node(writer, fset, typeSpec)
 						if errIn != nil {
 							err = errIn
 							return true
 						}
-						fmt.Fprint(&buf, "\n")
+						fmt.Fprint(writer, "\n")
 
-						fmt.Fprintf(&buf, templateFunc, typeSpec.Name.Name)
+						fmt.Fprintf(writer, templateFunc, typeSpec.Name.Name)
 					}
 				}
 			}
 		}
 		return true
 	})
+	return err
+}
+
+func generate(inputPath string) ([]byte, error) {
+	fset := token.NewFileSet()
+	f, _ := parser.ParseFile(fset, inputPath, nil, parser.ParseComments)
+
+	var (
+		buf bytes.Buffer
+		err error
+	)
+
+	printHeader(&buf)
+
+	printBody(&buf, f, fset)
+
 	return buf.Bytes(), err
 }
 
