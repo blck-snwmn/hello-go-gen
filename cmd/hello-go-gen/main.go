@@ -54,41 +54,48 @@ func printHeader(writer io.Writer) {
 	fmt.Fprintln(writer, `import "fmt"`)
 }
 
+func printByGenDel(writer io.Writer, fset *token.FileSet, gd *ast.GenDecl) error {
+	for _, spec := range gd.Specs {
+		if typeSpec, ok := spec.(*ast.TypeSpec); ok {
+			if _, ok := typeSpec.Type.(*ast.StructType); ok {
+				if len(gd.Specs) == 1 && typeSpec.Doc == nil {
+					// 以下のようなケースでコメントを取得するための処理
+					//  `gd.Lparen == token.NoPos` で判定もできそうだが、以下の場合,
+					// TypeSpec.Doc == nil となることが多そうなので、それで判定している
+					//
+					// // Foo is ...
+					// type Foo {}
+					typeSpec.Doc = gd.Doc
+				}
+				doc := typeSpec.Doc
+				typeSpec.Doc = nil
+				if doc != nil {
+					for _, d := range doc.List {
+						fmt.Fprintln(writer, d.Text)
+					}
+				}
+				fmt.Fprint(writer, "type ")
+
+				err := format.Node(writer, fset, typeSpec)
+				if err != nil {
+					return err
+				}
+				fmt.Fprint(writer, "\n")
+
+				fmt.Fprintf(writer, templateFunc, typeSpec.Name.Name)
+			}
+		}
+	}
+	return nil
+}
+
 func printBody(writer io.Writer, f *ast.File, fset *token.FileSet) error {
 	var err error
 	ast.Inspect(f, func(n ast.Node) bool {
 		if gd, ok := n.(*ast.GenDecl); ok {
-			for _, spec := range gd.Specs {
-				if typeSpec, ok := spec.(*ast.TypeSpec); ok {
-					if _, ok := typeSpec.Type.(*ast.StructType); ok {
-						if len(gd.Specs) == 1 && typeSpec.Doc == nil {
-							// 以下のようなケースでコメントを取得するための処理
-							//  `gd.Lparen == token.NoPos` で判定もできそうだが、以下の場合,
-							// TypeSpec.Doc == nil となることが多そうなので、それで判定している
-							//
-							// // Foo is ...
-							// type Foo {}
-							typeSpec.Doc = gd.Doc
-						}
-						doc := typeSpec.Doc
-						typeSpec.Doc = nil
-						if doc != nil {
-							for _, d := range doc.List {
-								fmt.Fprintln(writer, d.Text)
-							}
-						}
-						fmt.Fprint(writer, "type ")
-
-						errIn := format.Node(writer, fset, typeSpec)
-						if errIn != nil {
-							err = errIn
-							return true
-						}
-						fmt.Fprint(writer, "\n")
-
-						fmt.Fprintf(writer, templateFunc, typeSpec.Name.Name)
-					}
-				}
+			if errIn := printByGenDel(writer, fset, gd); errIn != nil {
+				err = errIn
+				return false
 			}
 		}
 		return true
