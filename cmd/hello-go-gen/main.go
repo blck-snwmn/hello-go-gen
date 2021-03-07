@@ -54,6 +54,19 @@ func printHeader(writer io.Writer) {
 	fmt.Fprintln(writer, `import "fmt"`)
 }
 
+func decideDoc(specs []ast.Spec, cg, alt *ast.CommentGroup) *ast.CommentGroup {
+	if len(specs) == 1 && cg == nil {
+		// 以下のようなケースでコメントを取得するための処理
+		//  `gd.Lparen == token.NoPos` で判定もできそうだが、以下の場合,
+		// TypeSpec.Doc == nil となることが多そうなので、それで判定している
+		//
+		// // Foo is ...
+		// type Foo {}
+		return alt
+	}
+	return cg
+}
+
 func printBySpec(writer io.Writer, fset *token.FileSet, gd *ast.GenDecl, spec ast.Spec) error {
 	typeSpec, ok := spec.(*ast.TypeSpec)
 	if !ok {
@@ -63,22 +76,15 @@ func printBySpec(writer io.Writer, fset *token.FileSet, gd *ast.GenDecl, spec as
 	if !ok {
 		return nil
 	}
-	if len(gd.Specs) == 1 && typeSpec.Doc == nil {
-		// 以下のようなケースでコメントを取得するための処理
-		//  `gd.Lparen == token.NoPos` で判定もできそうだが、以下の場合,
-		// TypeSpec.Doc == nil となることが多そうなので、それで判定している
-		//
-		// // Foo is ...
-		// type Foo {}
-		typeSpec.Doc = gd.Doc
-	}
-	doc := typeSpec.Doc
-	typeSpec.Doc = nil
-	if doc != nil {
+
+	if doc := decideDoc(gd.Specs, typeSpec.Doc, gd.Doc); doc != nil {
 		for _, d := range doc.List {
 			fmt.Fprintln(writer, d.Text)
 		}
 	}
+	// docの書き込みはtypeSpecの書き込みとは分けたいので、無視する
+	typeSpec.Doc = nil
+
 	fmt.Fprint(writer, "type ")
 
 	err := format.Node(writer, fset, typeSpec)
