@@ -3,8 +3,10 @@ package generate
 
 import "fmt"
 
+// Foo is samle
 type Foo struct {
-	a int
+	// inner comment
+	a int // a is sample
 }
 
 func (s *Foo) Hello() {
@@ -38,6 +40,7 @@ func (s *Bar) Hello4() {
 	fmt.Println("hello world2")
 }
 
+// Baz1 is sample
 type Baz1 struct {
 	aa int
 }

@@ -49,7 +49,7 @@ func execute(in, out string) error {
 
 func generate(inputPath string) ([]byte, error) {
 	fset := token.NewFileSet()
-	f, _ := parser.ParseFile(fset, inputPath, nil, parser.Mode(0))
+	f, _ := parser.ParseFile(fset, inputPath, nil, parser.ParseComments)
 
 	var (
 		buf bytes.Buffer
@@ -63,18 +63,38 @@ func generate(inputPath string) ([]byte, error) {
 	fmt.Fprintln(&buf, `import "fmt"`)
 
 	ast.Inspect(f, func(n ast.Node) bool {
-		if typeSpec, ok := n.(*ast.TypeSpec); ok {
-			if _, ok := typeSpec.Type.(*ast.StructType); ok {
-				fmt.Fprint(&buf, "type ")
+		if gd, ok := n.(*ast.GenDecl); ok {
+			for _, spec := range gd.Specs {
+				if typeSpec, ok := spec.(*ast.TypeSpec); ok {
+					if _, ok := typeSpec.Type.(*ast.StructType); ok {
+						if len(gd.Specs) == 1 && typeSpec.Doc == nil {
+							// 以下のようなケースでコメントを取得するための処理
+							//  `gd.Lparen == token.NoPos` で判定もできそうだが、以下の場合,
+							// TypeSpec.Doc == nil となることが多そうなので、それで判定している
+							//
+							// // Foo is ...
+							// type Foo {}
+							typeSpec.Doc = gd.Doc
+						}
+						doc := typeSpec.Doc
+						typeSpec.Doc = nil
+						if doc != nil {
+							for _, d := range doc.List {
+								fmt.Fprintln(&buf, d.Text)
+							}
+						}
+						fmt.Fprint(&buf, "type ")
 
-				errIn := format.Node(&buf, fset, typeSpec)
-				if errIn != nil {
-					err = errIn
-					return true
+						errIn := format.Node(&buf, fset, typeSpec)
+						if errIn != nil {
+							err = errIn
+							return true
+						}
+						fmt.Fprint(&buf, "\n")
+
+						fmt.Fprintf(&buf, templateFunc, typeSpec.Name.Name)
+					}
 				}
-				fmt.Fprint(&buf, "\n")
-
-				fmt.Fprintf(&buf, templateFunc, typeSpec.Name.Name)
 			}
 		}
 		return true
